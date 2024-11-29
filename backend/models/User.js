@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = mongoose.Schema({
-    name: {
+    fullName: {
         firstName: {
             type: String,
             required: true,
@@ -11,7 +12,6 @@ const userSchema = mongoose.Schema({
         lastName: {
             type: String,
             required: true,
-            minLength: [3, "Last name must be at least 3 characters long"]
         }
     },
     email: {
@@ -30,26 +30,20 @@ const userSchema = mongoose.Schema({
     },
 });
 
-userSchema.methods.hashPassword = async function() {
-    this.password = await bcrypt.hash(this.password, 10);
-};
+userSchema.statics.hashPassword = async function (password) {
+    return await bcrypt.hash(password, 10);
+}
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
-userSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) {
-        next();
-    }
-    this.hashPassword();
-});
+
 userSchema.methods.getFullName = function() {
-    return `${this.name.firstName} ${this.name.lastName}`;
+    return `${this.fullName.firstName} ${this.fullName.lastName}`;
 };
-userSchema.methods.generateToken = function() {
-    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE
-    });
-};
+userSchema.methods.generateAuthToken = function () {
+    const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    return token;
+}
 
 const User = mongoose.model("User", userSchema);
 
