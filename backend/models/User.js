@@ -17,7 +17,9 @@ const userSchema = mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
     },
     password: {
         type: String,
@@ -37,7 +39,7 @@ userSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 }
 
-userSchema.methods.getFullName = function() {
+userSchema.methods.getFullName = function () {
     return `${this.fullName.firstName} ${this.fullName.lastName}`;
 };
 userSchema.methods.generateAuthToken = function () {
